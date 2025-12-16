@@ -7,9 +7,7 @@ app = Flask(__name__)
 
 @app.route("/hello")
 def hello():
-    name = request.args.get("name")
-    if not name:
-        name = "world"
+    name = request.args.get("name", "world")
     return "Hello " + escape(name)
 
 
@@ -20,11 +18,13 @@ def ping():
     if not host:
         return "Missing host parameter", 400
 
+    if not host.replace(".", "").isalnum():
+        return "Invalid host", 400
+
     try:
         result = subprocess.run(
             ["ping", "-c", "1", host],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
             timeout=5
         )
@@ -35,24 +35,22 @@ def ping():
 
 @app.route("/read")
 def read_file():
-    path = request.args.get("path")
+    filename = request.args.get("path")
 
-    if not path:
+    if not filename:
         return "Missing path parameter", 400
 
     base_dir = os.path.abspath("safe_files")
-    full_path = os.path.abspath(os.path.join(base_dir, path))
+    requested_path = os.path.abspath(os.path.join(base_dir, filename))
 
-    if not full_path.startswith(base_dir):
+    if not requested_path.startswith(base_dir):
         return "Access denied", 403
 
     try:
-        with open(full_path, "r") as f:
+        with open(requested_path, "r") as f:
             return f.read()
-    except FileNotFoundError:
-        return "File not found", 404
     except Exception:
-        return "Error reading file", 500
+        return "File not found", 404
 
 
 if __name__ == "__main__":
