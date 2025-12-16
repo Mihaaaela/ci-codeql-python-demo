@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, escape
 import subprocess
 import os
 
@@ -7,11 +7,10 @@ app = Flask(__name__)
 
 @app.route("/hello")
 def hello():
-    # endpoint simplu, doar pentru test
     name = request.args.get("name")
     if not name:
         name = "world"
-    return "Hello " + name
+    return "Hello " + escape(name)
 
 
 @app.route("/ping")
@@ -22,7 +21,6 @@ def ping():
         return "Missing host parameter", 400
 
     try:
-        # rulam ping fara shell pentru a evita command injection
         result = subprocess.run(
             ["ping", "-c", "1", host],
             stdout=subprocess.PIPE,
@@ -42,13 +40,9 @@ def read_file():
     if not path:
         return "Missing path parameter", 400
 
-    # directorul din care permitem citirea fisierelor
     base_dir = os.path.abspath("safe_files")
-
-    # construim calea completa
     full_path = os.path.abspath(os.path.join(base_dir, path))
 
-    # verificam sa nu iasa din directorul permis
     if not full_path.startswith(base_dir):
         return "Access denied", 403
 
