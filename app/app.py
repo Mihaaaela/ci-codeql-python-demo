@@ -3,6 +3,7 @@ import subprocess
 
 app = Flask(__name__)
 
+
 @app.route("/ping")
 def ping():
     host = request.args.get("host")
@@ -20,6 +21,18 @@ def ping():
         return result.stdout
     except Exception:
         return "Ping failed", 500
+
+
+@app.route("/read")
+def read_file():
+    path = request.args.get("path")
+
+    if not path:
+        return "Missing path parameter", 400
+
+    # vulnerabilitate: path traversal
+    with open(path, "r") as f:
+        return f.read()
 
 
 if __name__ == "__main__":
