@@ -1,19 +1,27 @@
 from flask import Flask, request
-from markupsafe import escape
+import os
 
 app = Flask(__name__)
 
+# endpoint simplu pentru testare retea
+@app.route("/ping")
+def ping():
+    host = request.args.get("host")
 
-@app.route("/hello")
-def hello():
-    user_name = request.args.get("name")
+    if host is None:
+        return "Missing host parameter", 400
 
-    if not user_name:
-        return "Hello!", 200
+    # construim comanda direct (intentionat nesigur)
+    cmd = "ping -c 1 " + host
 
-    safe_name = escape(user_name)
-    return f"Hello {safe_name}", 200
+    try:
+        output = os.popen(cmd).read()
+    except Exception as e:
+        return str(e), 500
+
+    return output
 
 
 if __name__ == "__main__":
+    # rulare locala
     app.run(host="0.0.0.0", port=5000)
